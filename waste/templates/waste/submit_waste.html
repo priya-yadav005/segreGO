@@ -1,0 +1,62 @@
+{% extends 'waste/base.html' %}
+
+{% block title %}Submit Waste Entry - SegreGo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📝 Submit Today's Waste</h1>
+    <p>Flat: <strong>{{ household.flat_number }}</strong></p>
+    <p class="reward-note">Earn <strong>10 pts</strong> for correct segregation (wet/dry), <strong>2 pts</strong> for mixed. Maintain streaks for bonuses!</p>
+    <div class="profile-stats" style="margin-top: 1rem;">
+        <span class="badge profile-points">⭐ {{ household.points }} pts</span>
+        <span class="badge profile-streak">🔥 {{ household.consecutive_days }} day streak</span>
+        <span class="badge profile-tier">🏅 {{ household.tier }}</span>
+    </div>
+</div>
+
+<div class="form-card">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label>Select Waste Type</label>
+            <div class="waste-type-options">
+                <label class="waste-option wet">
+                    <input type="radio" name="waste_type" value="wet" required>
+                    <span class="option-card">
+                        <span class="icon">🥬</span>
+                        <span class="label">Wet Waste</span>
+                        <span class="description">Kitchen waste, food scraps, organic matter</span>
+                    </span>
+                </label>
+                
+                <label class="waste-option dry">
+                    <input type="radio" name="waste_type" value="dry" required>
+                    <span class="option-card">
+                        <span class="icon">📦</span>
+                        <span class="label">Dry Waste</span>
+                        <span class="description">Paper, plastic, metal, glass</span>
+                    </span>
+                </label>
+                
+                <label class="waste-option mixed">
+                    <input type="radio" name="waste_type" value="mixed" required>
+                    <span class="option-card">
+                        <span class="icon">🗑️</span>
+                        <span class="label">Mixed Waste</span>
+                        <span class="description">Unsegregated waste (not recommended)</span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="id_notes">Notes (Optional)</label>
+            <textarea name="notes" id="id_notes" rows="3" 
+                      placeholder="Any additional notes..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Submit Entry</button>
+    </form>
+</div>
+{% endblock %}

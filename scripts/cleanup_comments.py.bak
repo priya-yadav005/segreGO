@@ -1,0 +1,100 @@
+"""Remove comments and docstrings from project files only (excluding venv)."""
+from pathlib import Path
+import re
+import ast
+
+ROOT = Path(r"e:\projects\segrego").resolve()
+EXTS = {'.py', '.html', '.htm', '.css', '.js'}
+EXCLUDE_DIRS = {'.venv', '.env', '__pycache__', '.git', '.pytest_cache', 'node_modules'}
+
+changed_files = []
+
+def should_skip(path):
+    """Check if path should be skipped."""
+    parts = path.parts
+    for exclude in EXCLUDE_DIRS:
+        if exclude in parts:
+            return True
+    return False
+
+def remove_python_docstrings_and_comments(source: str) -> str:
+    """Remove docstrings and comments from Python code."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return source
+    
+    lines = source.split('\n')
+    removals = set()
+    
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)):
+            docstring = ast.get_docstring(node)
+            if docstring and hasattr(node, 'body') and len(node.body) > 0:
+                first_stmt = node.body[0]
+                if isinstance(first_stmt, ast.Expr) and isinstance(first_stmt.value, ast.Constant):
+                    start_line = first_stmt.lineno - 1
+                    end_line = first_stmt.end_lineno
+                    for line_no in range(start_line, end_line):
+                        if line_no < len(lines):
+                            removals.add(line_no)
+    
+    result_lines = []
+    for idx, line in enumerate(lines):
+        if idx not in removals:
+            stripped = re.sub(r'#.*$', '', line)
+            result_lines.append(stripped.rstrip())
+        else:
+            result_lines.append('')
+    
+    result = '\n'.join(result_lines)
+    result = re.sub(r'\n\n\n+', '\n\n', result)
+    
+    return result
+
+def remove_html_comments(text: str) -> str:
+    """Remove HTML comments."""
+    text = re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)
+    text = re.sub(r'\{#.*?#\}', '', text, flags=re.DOTALL)
+    return text
+
+def remove_css_js_comments(text: str) -> str:
+    """Remove CSS/JS comments."""
+    text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
+    text = re.sub(r'(^|\s)//.*$', lambda m: m.group(1), text, flags=re.MULTILINE)
+    return text
+
+print("Processing project files only (excluding venv/cache)...\n")
+
+for path in sorted(ROOT.rglob('*')):
+    if should_skip(path):
+        continue
+    
+    if path.suffix.lower() in EXTS and path.is_file():
+        try:
+            text = path.read_text(encoding='utf-8')
+        except Exception:
+            try:
+                text = path.read_text(encoding='latin-1')
+            except Exception:
+                continue
+
+        new_text = text
+        if path.suffix.lower() == '.py':
+            new_text = remove_python_docstrings_and_comments(text)
+        elif path.suffix.lower() in ('.html', '.htm'):
+            new_text = remove_html_comments(text)
+        elif path.suffix.lower() in ('.css', '.js'):
+            new_text = remove_css_js_comments(text)
+
+        if new_text != text:
+            rel_path = path.relative_to(ROOT)
+            bak_path = path.with_suffix(path.suffix + '.bak')
+            bak_path.write_text(text, encoding='utf-8')
+            path.write_text(new_text, encoding='utf-8')
+            changed_files.append(str(rel_path))
+            print(f"✓ {rel_path}")
+
+print(f"\nTotal: {len(changed_files)} project files modified")
+if changed_files:
+    print("Backups saved with .bak extension")

@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SegreGo{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="{% url 'home' %}">🗑️ SegreGo</a>
+        </div>
+        <div class="nav-links">
+            {% if user.is_authenticated %}
+                {% if user.is_staff %}
+                    <a href="{% url 'admin_dashboard' %}">📊 Dashboard</a>
+                    <a href="{% url 'admin:index' %}">⚙️ Admin Panel</a>
+                {% else %}
+                    <a href="{% url 'submit_waste' %}">♻️ Submit Waste</a>
+                    <a href="{% url 'history' %}">📋 My History</a>
+                    <a href="{% url 'leaderboard' %}" class="nav-leaderboard">🏆 Leaderboard</a>
+                {% endif %}
+                <span class="user-info">{{ user.username }}</span>
+                {% if not user.is_staff and user.household %}
+                    <span class="user-stats">⭐ {{ user.household.points }} pts</span>
+                    <span class="user-stats">🔥 {{ user.household.consecutive_days }}d streak</span>
+                {% endif %}
+                <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout" style="border: none; background: none; cursor: pointer; padding: 0; font-size: inherit;">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">🔐 Login</a>
+                <a href="{% url 'register' %}">📝 Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="container">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 SegreGo - Household Waste Segregation Tracker</p>
+    </footer>
+</body>
+</html>

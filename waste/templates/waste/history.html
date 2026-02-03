@@ -1,0 +1,94 @@
+{% extends 'waste/base.html' %}
+
+{% block title %}My History - SegreGo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>My Submission History</h1>
+    {% if household %}
+        <p>Flat: <strong>{{ household.flat_number }}</strong></p>
+        <div class="profile-stats">
+            <span class="badge profile-points">⭐ {{ household.points }} pts</span>
+            <span class="badge profile-streak">🔥 {{ household.consecutive_days }} day streak</span>
+            <span class="badge profile-tier">🏅 {{ household.tier }}</span>
+        </div>
+    {% endif %}
+</div>
+
+
+{% if today_reminder %}
+    <div class="reminder-card alert alert-success">
+        <div class="reminder-content">
+            <span class="reminder-icon">💬</span>
+            <div>
+                <strong>Today's Reminder:</strong> {{ today_reminder.message }}
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+
+{% if household %}
+    <div class="segregation-score-card">
+        <div class="score-header">
+            <h2>📊 Area Segregation Score</h2>
+            <p>Your waste segregation performance</p>
+        </div>
+        <div class="score-body">
+            <div class="score-display">
+                <div class="score-value">{{ household.area_segregation_score }}%</div>
+                <div class="score-bar">
+                    <div class="score-fill" style="width: {{ household.area_segregation_score }}%"></div>
+                </div>
+                <div class="score-description">
+                    {% if household.area_segregation_score >= 90 %}
+                        <span class="score-label excellent">Excellent! Keep it up! ✨</span>
+                    {% elif household.area_segregation_score >= 75 %}
+                        <span class="score-label good">Good Job! 👍</span>
+                    {% elif household.area_segregation_score >= 50 %}
+                        <span class="score-label fair">Fair - Keep Improving 📈</span>
+                    {% else %}
+                        <span class="score-label poor">Need Improvement ⚠️</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<div class="action-bar">
+    <a href="{% url 'submit_waste' %}" class="btn btn-primary">+ Submit New Entry</a>
+</div>
+
+{% if entries %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Waste Type</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.date|date:"M d, Y" }}</td>
+                        <td>
+                            <span class="badge badge-{{ entry.waste_type }}">
+                                {{ entry.get_waste_type_display }}
+                            </span>
+                        </td>
+                        <td>{{ entry.notes|default:"-" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="empty-state">
+        <p>No waste entries yet.</p>
+        <a href="{% url 'submit_waste' %}" class="btn btn-primary">Submit Your First Entry</a>
+    </div>
+{% endif %}
+{% endblock %}

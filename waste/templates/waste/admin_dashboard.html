@@ -1,0 +1,140 @@
+{% extends 'waste/base.html' %}
+
+{% block title %}Admin Dashboard - SegreGo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Admin Dashboard</h1>
+    <p>Society Waste Segregation Overview</p>
+</div>
+
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-number">{{ households|length }}</span>
+        <span class="stat-label">Households</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ total_entries }}</span>
+        <span class="stat-label">Total Entries</span>
+    </div>
+    <div class="stat-card stat-wet">
+        <span class="stat-number">{{ wet_count }}</span>
+        <span class="stat-label">Wet Waste</span>
+    </div>
+    <div class="stat-card stat-dry">
+        <span class="stat-number">{{ dry_count }}</span>
+        <span class="stat-label">Dry Waste</span>
+    </div>
+    <div class="stat-card stat-mixed">
+        <span class="stat-number">{{ mixed_count }}</span>
+        <span class="stat-label">Mixed Waste</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ avg_segregation_score }}%</span>
+        <span class="stat-label">Avg. Segregation Score</span>
+    </div>
+</div>
+
+
+{% if mixed_violators %}
+<section class="dashboard-section">
+    <h2>⚠️ Frequent Mixed Waste Submitters</h2>
+    <p class="section-subtitle">Households with 3 or more mixed waste entries</p>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Flat Number</th>
+                    <th>Resident</th>
+                    <th>Mixed Entries Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for household in mixed_violators %}
+                    <tr class="row-warning">
+                        <td><strong>{{ household.flat_number }}</strong></td>
+                        <td>{{ household.user.username }}</td>
+                        <td>
+                            <span class="badge badge-mixed">{{ household.mixed_count }}</span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+
+<section class="dashboard-section">
+    <h2>All Households</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Flat Number</th>
+                    <th>Resident</th>
+                    <th>Points</th>
+                    <th>Segregation Score</th>
+                    <th>Registered On</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for household in households %}
+                    <tr>
+                        <td><strong>{{ household.flat_number }}</strong></td>
+                        <td>{{ household.user.username }}</td>
+                        <td><span class="badge" style="background: #fef3c7; color: #92400e;">{{ household.points }} pts</span></td>
+                        <td>
+                            <span class="badge" style="{% if household.area_segregation_score >= 75 %}background: #dcfce7; color: #166534;{% elif household.area_segregation_score >= 50 %}background: #fef3c7; color: #92400e;{% else %}background: #fee2e2; color: #991b1b;{% endif %}">
+                                {{ household.area_segregation_score }}%
+                            </span>
+                        </td>
+                        <td>{{ household.created_at|date:"M d, Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-cell">No households registered yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+
+<section class="dashboard-section">
+    <h2>Recent Waste Entries</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Flat</th>
+                    <th>Waste Type</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in recent_entries %}
+                    <tr>
+                        <td>{{ entry.date|date:"M d, Y" }}</td>
+                        <td><strong>{{ entry.household.flat_number }}</strong></td>
+                        <td>
+                            <span class="badge badge-{{ entry.waste_type }}">
+                                {{ entry.get_waste_type_display }}
+                            </span>
+                        </td>
+                        <td>{{ entry.notes|default:"-" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="empty-cell">No entries yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
